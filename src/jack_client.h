@@ -34,8 +34,8 @@
 
 #include <aubio/aubio.h>
 
-#define BUF_SIZE 128
-#define HOP_SIZE 64
+#define BUF_SIZE 256
+#define HOP_SIZE 128
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -54,6 +54,9 @@ public:
   static int _process(jack_nframes_t nframes, void* arg);
   int process(jack_nframes_t nframes);
 
+signals:
+    void onset(void);
+
 private:
   jack_port_t *_input_port;
   jack_port_t *_output_port;
@@ -65,7 +68,7 @@ private:
 
   fvec_t *_ibuf;
   aubio_onset_t *_onset;
-  aubio_onsetdetection_type _onset_mode = aubio_onset_energy;
+  char * _onset_mode = "default";
   fvec_t *_onset_list;
 
 };

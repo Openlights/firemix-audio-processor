@@ -9,4 +9,4 @@ SOURCES +=  src/main.cpp \
 
 HEADERS +=  src/jack_client.h
 
-LIBS += -ljack -laubio
+LIBS += -ljack -laubio -L/usr/local/lib
