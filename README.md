@@ -1,4 +1,10 @@
-firemix-audio-processor
+FireMix Audio Processor
 =======================
 
-FireMix Audio Processor
+Dependencies
+------------
+libfftw3-bin 
+libfftw3-dev
+libaubio-dev
+libjack-dev
+libqt4-dev
