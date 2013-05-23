@@ -154,28 +154,20 @@ int JackClient::process(jack_nframes_t nframes) {
       memcpy(_buffer, in, sizeof(sample_t) * BUF_SIZE);
   }
 
-  float avg = 0.0;
   for (unsigned int i = 0; i < nframes; i++)
   {
     _ibuf->data[pos] = _buffer[i];
-    avg += fabs(_buffer[i]);
     if (pos == HOP_SIZE-1)
     {
       aubio_onset_do(_onset, _ibuf, _onset_list);
       if (fvec_read_sample(_onset_list, 0))
       {
-        qDebug() << "Onset";
+        //qDebug() << "Onset";
+        emit onset_detected();
       }
       pos = -1;
     }
     pos++;
-  }
-
-  avg /= BUF_SIZE;
-
-  if (avg > 0.1)
-  {
-    qDebug("%f", avg);
   }
 
   return 0;

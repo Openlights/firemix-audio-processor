@@ -23,6 +23,7 @@
 #include <QtCore/QCoreApplication>
 
 #include "jack_client.h"
+#include "networking.h"
 
 
 int main(int argc, char** argv)
@@ -30,6 +31,9 @@ int main(int argc, char** argv)
     QCoreApplication app(argc, argv);
 
     JackClient jc;
+    Networking net(TRANSMIT_PORT);
+
+    QObject::connect(&jc, SIGNAL(onset_detected()), &net, SLOT(transmit_onset()));
 
     return app.exec();
 }

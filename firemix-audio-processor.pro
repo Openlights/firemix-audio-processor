@@ -5,8 +5,10 @@ QT += core network
 DEFINES += QT_DLL QT_NETWORK_LIB
 
 SOURCES +=  src/main.cpp \
-			src/jack_client.cpp
+			src/jack_client.cpp \
+			src/networking.cpp
 
-HEADERS +=  src/jack_client.h
+HEADERS +=  src/jack_client.h \
+			src/networking.h
 
 LIBS += -ljack -laubio -L/usr/local/lib

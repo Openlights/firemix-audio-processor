@@ -55,7 +55,7 @@ public:
   int process(jack_nframes_t nframes);
 
 signals:
-    void onset(void);
+    void onset_detected(void);
 
 private:
   jack_port_t *_input_port;
