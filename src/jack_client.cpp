@@ -88,10 +88,20 @@ JackClient::JackClient()
       return;
   }
 
-  qDebug("Registered JACK input port.  Listening at %d kHz", jack_get_sample_rate(_client));
+  _samplerate = jack_get_sample_rate(_client);
+
+  qDebug("Registered JACK input port.  Listening at %d kHz", _samplerate);
 
   free (ports);
   _active = true;
+
+  _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  _ibuf = new_fvec(HOP_SIZE, 1);
+
+  if (!_ibuf)
+  {
+    qDebug() << "Error allocating buffer";
+  }
 }
 
 
@@ -99,6 +109,9 @@ JackClient::~JackClient()
 {
   qDebug() << "Shutting down JACK client";
   jack_client_close(_client);
+  del_aubio_onset(_onset);
+  del_fvec(_ibuf);
+  aubio_cleanup();
 }
 
 
@@ -122,13 +135,14 @@ int JackClient::_process(jack_nframes_t nframes, void* arg) {
 
 
 int JackClient::process(jack_nframes_t nframes) { 
+  static unsigned int pos = 0;
   jack_default_audio_sample_t *in;
 
   in = (jack_default_audio_sample_t*)jack_port_get_buffer(_input_port, nframes);
 
   if(nframes < BUF_SIZE)
   {
-      qDebug("Warning: Capturing less than %d frames into the buffer in process()!", BUF_SIZE);
+      qDebug("Warning: wanted %d frames but got %d", BUF_SIZE, nframes);
       memset(_buffer, 0, sizeof(_buffer));
       memcpy(_buffer, in, sizeof(sample_t) * nframes);
   }
@@ -138,9 +152,22 @@ int JackClient::process(jack_nframes_t nframes) {
   }
 
   float avg = 0.0;
-  for (int i = 0; i < BUF_SIZE; i++)
+  for (int i = 0; i < nframes; i++)
   {
+    //fvec_write_sample(_ibuf, _buffer[i], 0, pos);
+    qDebug("Pos %d, i %d, sample %f", pos, i, _buffer[i]);
+    _ibuf->data[0][pos] = _buffer[i];
     avg += fabs(_buffer[i]);
+    if (pos == HOP_SIZE-1)
+    {
+     /* aubio_onset(_onset, _ibuf, _onset_list);
+      if (fvec_read_sample(_onset_list, 0, 0))
+      {
+        qDebug() << "Onset";
+      }*/
+      pos = -1;
+    }
+    pos++;
   }
 
   avg /= BUF_SIZE;

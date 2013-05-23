@@ -34,8 +34,8 @@
 
 #include <aubio/aubio.h>
 
-#define BUF_SIZE 256
-#define HOP_SIZE 128
+#define BUF_SIZE 128
+#define HOP_SIZE 64
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -58,33 +58,16 @@ private:
   jack_port_t *_input_port;
   jack_port_t *_output_port;
   jack_client_t *_client;
+
   bool _active;
   sample_t _buffer[BUF_SIZE];
+  int _samplerate;
+
+  fvec_t *_ibuf;
+  aubio_onset_t *_onset;
+  aubio_onsetdetection_type _onset_mode = aubio_onset_energy;
+  fvec_t *_onset_list;
 
 };
-
-#ifdef OLD
-typedef jack_default_audio_sample_t jack_sample_t;
-
-/** jack object */
-typedef struct _aubio_jack_t aubio_jack_t;
-/** jack process function */
-typedef int (*aubio_process_func_t) (smpl_t ** input,
-    smpl_t ** output, int nframes);
-
-/** jack device creation function */
-aubio_jack_t *new_aubio_jack (uint_t inchannels, uint_t outchannels,
-    uint_t imidichan, uint_t omidichan,
-    aubio_process_func_t callback);
-/** activate jack client (run jackprocess function) */
-uint_t aubio_jack_activate (aubio_jack_t * jack_setup);
-/** close and delete jack client */
-void aubio_jack_close (aubio_jack_t * jack_setup);
-
-/** write a jack_midi_event_t to the midi output ringbuffer */
-void aubio_jack_midi_event_write (aubio_jack_t * jack_setup,
-    jack_midi_event_t * event);
-#endif
-
 
 #endif
