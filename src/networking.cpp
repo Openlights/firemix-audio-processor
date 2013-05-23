@@ -20,56 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _JACK_CLIENT_H
-#define _JACK_CLIENT_H
-
-#include <math.h>
-
-#include <QtCore/QObject>
-#include <QtCore/QDebug>
-
-#include <jack/jack.h>
-#include <jack/midiport.h>
-#include <jack/ringbuffer.h>
-
-#include <aubio/aubio.h>
-
-#define BUF_SIZE 256
-#define HOP_SIZE 128
-
-typedef jack_default_audio_sample_t sample_t;
+#include "networking.h"
 
 
-class JackClient : public QObject
+Networking::Networking(uint16_t port_num)
 {
-  Q_OBJECT
+    _socket = new QUdpSocket(this);
+    _port_num = port_num;
+}
 
-public:
-  JackClient();
-  ~JackClient();
 
-  static void _jack_client_shutdown(void* arg);
-  void jack_client_shutdown(void);
+Networking::~Networking()
+{
+}
 
-  static int _process(jack_nframes_t nframes, void* arg);
-  int process(jack_nframes_t nframes);
 
-signals:
-    void onset_detected(void);
+bool Networking::open(void)
+{
+    return true;    
+}
 
-private:
-  jack_port_t *_input_port;
-  jack_port_t *_output_port;
-  jack_client_t *_client;
 
-  bool _active;
-  sample_t _buffer[BUF_SIZE];
-  int _samplerate;
+bool Networking::close(void)
+{
+    return true;
+}
 
-  fvec_t *_ibuf;
-  aubio_onset_t *_onset;
-  fvec_t *_onset_list;
 
-};
-
-#endif
+void Networking::transmit_onset()
+{
+    QByteArray dgram;
+    dgram.resize(1);
+    dgram[0] = MSG_ONSET;
+    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+}

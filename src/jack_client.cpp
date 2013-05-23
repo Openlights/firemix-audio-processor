@@ -31,9 +31,18 @@ JackClient::JackClient()
   jack_options_t options = JackNullOption;
   jack_status_t status;
 
+  char * _onset_mode = "mkl";
+  smpl_t silence = -50.0;
+  smpl_t threshold = 0.001;
+
   _active = false;
 
   _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  aubio_onset_set_silence(_onset, silence);
+  aubio_onset_set_minioi_ms(_onset, 100);
+  //aubio_onset_set_threshold (_onset, threshold);
+
+
   _ibuf = NULL;
   _ibuf = new_fvec(HOP_SIZE);
   _onset_list = new_fvec(1);

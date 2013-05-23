@@ -20,56 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _JACK_CLIENT_H
-#define _JACK_CLIENT_H
+#ifndef _NETWORKING_H
+#define _NETWORKING_H
 
-#include <math.h>
+#include <stdint.h>
 
 #include <QtCore/QObject>
 #include <QtCore/QDebug>
+#include <QtNetwork/QUdpSocket>
 
-#include <jack/jack.h>
-#include <jack/midiport.h>
-#include <jack/ringbuffer.h>
+#define TRANSMIT_PORT 3010
 
-#include <aubio/aubio.h>
-
-#define BUF_SIZE 256
-#define HOP_SIZE 128
-
-typedef jack_default_audio_sample_t sample_t;
+#define MSG_ONSET 0x77
 
 
-class JackClient : public QObject
+class Networking : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  JackClient();
-  ~JackClient();
+    Networking(uint16_t port_num);
+    ~Networking();
 
-  static void _jack_client_shutdown(void* arg);
-  void jack_client_shutdown(void);
+    bool open(void);
+    bool close(void);
 
-  static int _process(jack_nframes_t nframes, void* arg);
-  int process(jack_nframes_t nframes);
-
-signals:
-    void onset_detected(void);
+public slots:
+    void transmit_onset(void);
 
 private:
-  jack_port_t *_input_port;
-  jack_port_t *_output_port;
-  jack_client_t *_client;
-
-  bool _active;
-  sample_t _buffer[BUF_SIZE];
-  int _samplerate;
-
-  fvec_t *_ibuf;
-  aubio_onset_t *_onset;
-  fvec_t *_onset_list;
-
+    QUdpSocket *_socket;
+    uint16_t _port_num;
 };
 
 #endif
