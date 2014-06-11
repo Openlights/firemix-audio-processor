@@ -52,5 +52,6 @@ void Networking::transmit_onset()
     QByteArray dgram;
     dgram.resize(1);
     dgram[0] = MSG_ONSET;
+    qDebug() << "beat";
     _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
 }

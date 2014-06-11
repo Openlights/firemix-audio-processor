@@ -31,15 +31,14 @@ JackClient::JackClient()
   jack_options_t options = JackNullOption;
   jack_status_t status;
 
-  char * _onset_mode = "mkl";
-  smpl_t silence = -50.0;
-  smpl_t threshold = 0.001;
+  char _onset_mode[4] = "mkl";
+  smpl_t silence = -40.0;
 
   _active = false;
 
   _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
   aubio_onset_set_silence(_onset, silence);
-  aubio_onset_set_minioi_ms(_onset, 100);
+  aubio_onset_set_minioi_ms(_onset, 350);
   //aubio_onset_set_threshold (_onset, threshold);
 
 
@@ -169,10 +168,11 @@ int JackClient::process(jack_nframes_t nframes) {
     if (pos == HOP_SIZE-1)
     {
       aubio_onset_do(_onset, _ibuf, _onset_list);
-      if (fvec_read_sample(_onset_list, 0))
+      if (_onset_list->data[0] != 0)
       {
         //qDebug() << "Onset";
         emit onset_detected();
+        break;
       }
       pos = -1;
     }
