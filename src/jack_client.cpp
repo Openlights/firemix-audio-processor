@@ -31,16 +31,10 @@ JackClient::JackClient()
   jack_options_t options = JackNullOption;
   jack_status_t status;
 
-  char _onset_mode[4] = "mkl";
-  smpl_t silence = -40.0;
-
   _active = false;
 
-  _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
-  aubio_onset_set_silence(_onset, silence);
-  aubio_onset_set_minioi_ms(_onset, 350);
-  //aubio_onset_set_threshold (_onset, threshold);
-
+  _fft = new_aubio_fft(FFT_SIZE);
+  _grain = new_cvec(FFT_SIZE);
 
   _ibuf = NULL;
   _ibuf = new_fvec(HOP_SIZE);
@@ -105,6 +99,16 @@ JackClient::JackClient()
 
   qDebug("Registered JACK input port.  Listening at %d kHz", _samplerate);
 
+  char _onset_mode[4] = "mkl";
+  //char _onset_mode[4] = "hfc";
+  //char _onset_mode[9] = "specflux";
+  smpl_t threshold = 0.3;
+  smpl_t silence = -70.0;
+  _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  aubio_onset_set_threshold(_onset, threshold);
+  aubio_onset_set_silence(_onset, silence);
+  aubio_onset_set_minioi_ms(_onset, 250);
+
   free (ports);
   _active = true;
 
@@ -120,6 +124,8 @@ JackClient::~JackClient()
   qDebug() << "Shutting down JACK client";
   jack_client_close(_client);
   del_aubio_onset(_onset);
+  del_aubio_fft(_fft);
+  del_cvec(_grain);
   del_fvec(_ibuf);
   del_fvec(_onset_list);
   aubio_cleanup();
@@ -147,6 +153,7 @@ int JackClient::_process(jack_nframes_t nframes, void* arg) {
 
 int JackClient::process(jack_nframes_t nframes) { 
   static unsigned int pos = 0;
+  static unsigned int delay = 0;
   jack_default_audio_sample_t *in;
 
   in = (jack_default_audio_sample_t*)jack_port_get_buffer(_input_port, nframes);
@@ -167,11 +174,28 @@ int JackClient::process(jack_nframes_t nframes) {
     _ibuf->data[pos] = _buffer[i];
     if (pos == HOP_SIZE-1)
     {
+      aubio_fft_do(_fft, _ibuf, _grain);
+
+      if (delay > FFT_SEND_INTERVAL)
+      {
+        emit fft_data(_grain->length, (float *)_grain->norm);
+        delay = 0;
+      }
+      else
+      {
+        delay += nframes;
+      }
+
+      //if (_grain->norm[0] > 0.1) {
+      //  cvec_print(_grain);
+      //}
+
       aubio_onset_do(_onset, _ibuf, _onset_list);
+
       if (_onset_list->data[0] != 0)
       {
-        //qDebug() << "Onset";
         emit onset_detected();
+        emit fft_data(_grain->length, (float *)_grain->norm);
         break;
       }
       pos = -1;

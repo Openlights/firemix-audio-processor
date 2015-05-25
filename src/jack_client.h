@@ -32,10 +32,12 @@
 #include <jack/midiport.h>
 #include <jack/ringbuffer.h>
 
-#include <aubio/aubio.h>
+#include <aubio.h>
 
-#define BUF_SIZE 256
-#define HOP_SIZE 128
+#define FFT_SIZE 32
+#define BUF_SIZE 512
+#define HOP_SIZE 256
+#define FFT_SEND_INTERVAL 4096
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -56,6 +58,7 @@ public:
 
 signals:
     void onset_detected(void);
+    void fft_data(int len, float *data);
 
 private:
   jack_port_t *_input_port;
@@ -67,8 +70,12 @@ private:
   int _samplerate;
 
   fvec_t *_ibuf;
+
   aubio_onset_t *_onset;
   fvec_t *_onset_list;
+
+  aubio_fft_t *_fft;
+  cvec_t *_grain;
 
 };
 

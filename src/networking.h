@@ -31,6 +31,7 @@
 
 #define TRANSMIT_PORT 3010
 
+#define MSG_FFT 0x66
 #define MSG_ONSET 0x77
 
 
@@ -47,6 +48,7 @@ public:
 
 public slots:
     void transmit_onset(void);
+    void transmit_fft_data(int len, float *data);
 
 private:
     QUdpSocket *_socket;

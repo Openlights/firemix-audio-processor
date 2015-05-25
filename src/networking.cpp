@@ -52,6 +52,16 @@ void Networking::transmit_onset()
     QByteArray dgram;
     dgram.resize(1);
     dgram[0] = MSG_ONSET;
-    qDebug() << "beat";
+    //qDebug() << "beat";
+    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+}
+
+void Networking::transmit_fft_data(int len, float *data)
+{
+    QByteArray dgram;
+    dgram.resize(2 + len * sizeof(float));
+    dgram[0] = MSG_FFT;
+    dgram[1] = (char)len;
+    memcpy(dgram.data() + 2, data, len * sizeof(float));
     _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
 }
