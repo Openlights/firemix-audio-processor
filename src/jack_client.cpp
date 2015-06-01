@@ -158,6 +158,8 @@ int JackClient::process(jack_nframes_t nframes) {
 
   in = (jack_default_audio_sample_t*)jack_port_get_buffer(_input_port, nframes);
 
+  //qDebug("Wanted %d frames and got %d", BUF_SIZE, nframes);
+
   if(nframes < BUF_SIZE)
   {
       qDebug("Warning: wanted %d frames but got %d", BUF_SIZE, nframes);
@@ -178,7 +180,99 @@ int JackClient::process(jack_nframes_t nframes) {
 
       if (delay > FFT_SEND_INTERVAL)
       {
-        emit fft_data(_grain->length, (float *)_grain->norm);
+        const int logged_size = 256;
+        float logged_buffer[logged_size];
+
+        const int bucket_indexes[] = {
+            1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+            3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
+            5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6,
+            7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
+            9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10,
+            11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13,
+            13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17,
+            17, 17, 18, 18, 18, 18, 19, 19, 19, 19, 20, 20, 20, 20, 21, 21,
+            21, 21, 22, 22, 22, 22, 23, 23, 23, 24, 24, 24, 25, 25, 26, 27,
+            27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36, 37, 38, 39,
+            40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 57,
+            58, 59, 61, 62, 64, 65, 67, 68, 70, 71, 73, 75, 76, 78, 80, 82,
+            84, 86, 88, 90, 92, 94, 97, 99, 101, 103, 106, 108, 111, 114, 116, 119,
+            122, 125, 128, 130, 134, 137, 140, 143, 147, 150, 153, 157, 161, 165, 168, 172,
+            176, 181, 185, 189, 194, 198, 203, 207, 212, 217, 222, 228, 233, 238, 244, 250,
+            256, 261, 268, 274, 280, 287, 294, 300, 307, 315, 330, 350, 375, 405, 440, 480, 512
+        };
+        const int bucket_lerp[] = {
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+            2, 4, 5, 6, 8, 9,
+            2, 4, 5, 6, 8, 9,
+            2, 4, 5, 6, 8, 9,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 4, 6, 8,
+            2, 5, 8,
+            2, 5, 8,
+            3, 8,
+            5, 5, 3, 8, 5, 5, 3, 8, 5, 5, 3, 8, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+        };
+
+        const float adjust_volume[] = {
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+        };
+
+        for (int i = 0; i < logged_size; i++)
+        {
+            if (bucket_indexes[i] == bucket_indexes[i+1])
+            {
+                float lerp = bucket_lerp[i] / 10.0;
+                logged_buffer[i] = _grain->norm[bucket_indexes[i]] * (1.0 - lerp) + _grain->norm[bucket_indexes[i]+1] * (lerp);
+                //qDebug("lerp %d : lerp %f from %f to %f is %f", i, lerp, _grain->norm[bucket_indexes[i]], _grain->norm[bucket_indexes[i]+1], logged_buffer[i]);
+            }
+            else
+            {
+                logged_buffer[i] = 0;
+                for (int j = bucket_indexes[i]; (j <= bucket_indexes[i+1]); j++)
+                {
+                    logged_buffer[i] += _grain->norm[j];
+                }
+            }
+            logged_buffer[i] *= adjust_volume[i] / 10.0;
+            //qDebug("fft %d : currently %d, bucket size %f", i, current, bucket_size);
+        }
+        //qDebug("Used %d frames, bucket size is %f", current, bucket_size);
+
+        emit fft_data(logged_size, logged_buffer);
         delay = 0;
       }
       else
@@ -190,14 +284,14 @@ int JackClient::process(jack_nframes_t nframes) {
       //  cvec_print(_grain);
       //}
 
-      aubio_onset_do(_onset, _ibuf, _onset_list);
+//      aubio_onset_do(_onset, _ibuf, _onset_list);
 
-      if (_onset_list->data[0] != 0)
-      {
-        emit onset_detected();
-        emit fft_data(_grain->length, (float *)_grain->norm);
-        break;
-      }
+//      if (_onset_list->data[0] != 0)
+//      {
+//        emit onset_detected();
+//        emit fft_data(_grain->length, (float *)_grain->norm);
+//        break;
+//      }
       pos = -1;
     }
     pos++;

@@ -34,10 +34,10 @@
 
 #include <aubio.h>
 
-#define FFT_SIZE 32
-#define BUF_SIZE 512
-#define HOP_SIZE 256
-#define FFT_SEND_INTERVAL 4096
+#define FFT_SIZE 1024
+#define BUF_SIZE 1024
+#define HOP_SIZE 1024
+#define FFT_SEND_INTERVAL 1024
 
 typedef jack_default_audio_sample_t sample_t;
 

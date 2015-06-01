@@ -59,9 +59,10 @@ void Networking::transmit_onset()
 void Networking::transmit_fft_data(int len, float *data)
 {
     QByteArray dgram;
-    dgram.resize(2 + len * sizeof(float));
+    dgram.resize(3 + len * sizeof(float));
     dgram[0] = MSG_FFT;
     dgram[1] = (char)len;
-    memcpy(dgram.data() + 2, data, len * sizeof(float));
+    dgram[2] = (char)((len & 0xff00) >> 8);
+    memcpy(dgram.data() + 3, data, len * sizeof(float));
     _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
 }
