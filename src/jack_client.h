@@ -78,7 +78,7 @@ private:
   cvec_t *_grain;
   
   aubio_pitch_t *_pitch;
-  fvec_t *_pitch;
+  fvec_t *_pitch_value;
   fvec_t *_pitch_confidence;
 
 };
