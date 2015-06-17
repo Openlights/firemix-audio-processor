@@ -39,7 +39,7 @@ JackClient::JackClient()
   _ibuf = NULL;
   _ibuf = new_fvec(HOP_SIZE);
   _onset_list = new_fvec(1);
-
+  
   _client = jack_client_open(client_name, options, &status, server_name);
 
   if (_client == NULL)
@@ -108,6 +108,10 @@ JackClient::JackClient()
   aubio_onset_set_threshold(_onset, threshold);
   aubio_onset_set_silence(_onset, silence);
   aubio_onset_set_minioi_ms(_onset, 250);
+  
+  char _pitch_mode[7] = "yinfft";
+  _pitch = new_aubio_pitch(_pitch_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  _pitch_value = new_fvec(1);
 
   free (ports);
   _active = true;
@@ -125,7 +129,9 @@ JackClient::~JackClient()
   jack_client_close(_client);
   del_aubio_onset(_onset);
   del_aubio_fft(_fft);
+  del_aubio_pitch(_pitch);
   del_cvec(_grain);
+  del_fvec(_pitch_value);
   del_fvec(_ibuf);
   del_fvec(_onset_list);
   aubio_cleanup();
@@ -314,6 +320,12 @@ int JackClient::process(jack_nframes_t nframes) {
       {
         delay += nframes;
       }
+      
+      aubio_pitch_do(_pitch, _ibuf, _pitch_value);
+      smpl_t confidence = aubio_pitch_get_confidence(_pitch);
+      smpl_t pitch_found = fvec_get_sample(_pitch_value, 0);
+      
+      qDebug("Pitch detected %f confidence %f", pitch_found, confidence);
 
       //if (_grain->norm[0] > 0.1) {
       //  cvec_print(_grain);
