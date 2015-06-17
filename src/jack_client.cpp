@@ -112,6 +112,8 @@ JackClient::JackClient()
   char _pitch_mode[7] = "yinfft";
   _pitch = new_aubio_pitch(_pitch_mode, BUF_SIZE, HOP_SIZE, _samplerate);
   _pitch_value = new_fvec(1);
+  char _pitch_unit[3] = "Hz";
+  aubio_pitch_set_unit(_pitch, _pitch_unit);
 
   free (ports);
   _active = true;
