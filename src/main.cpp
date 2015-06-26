@@ -35,6 +35,7 @@ int main(int argc, char** argv)
 
     QObject::connect(&jc, SIGNAL(onset_detected()), &net, SLOT(transmit_onset()));
     QObject::connect(&jc, SIGNAL(fft_data(int, float*)), &net, SLOT(transmit_fft_data(int, float*)));
+    QObject::connect(&jc, SIGNAL(pitch_data(float,float)), &net, SLOT(transmit_pitch_data(float,float)));
 
     return app.exec();
 }

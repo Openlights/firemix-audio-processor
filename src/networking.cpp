@@ -66,3 +66,17 @@ void Networking::transmit_fft_data(int len, float *data)
     memcpy(dgram.data() + 3, data, len * sizeof(float));
     _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
 }
+
+
+void Networking::transmit_pitch_data(float pitch, float confidence)
+{
+    QByteArray dgram;
+    dgram.resize(1 + 2 * sizeof(float));
+    float *ptr = (float *)(dgram.data() + 1);
+
+    dgram[0] = MSG_PITCH;
+    *ptr++ = pitch;
+    *ptr = confidence;
+
+    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+}

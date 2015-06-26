@@ -297,7 +297,10 @@ int JackClient::process(jack_nframes_t nframes) {
       smpl_t confidence = aubio_pitch_get_confidence(_pitch);
       smpl_t pitch_found = fvec_get_sample(_pitch_value, 0);
       
-      //qDebug("Pitch detected %f confidence %f", pitch_found, confidence);
+      if (confidence > 0.9) {
+        //qDebug("Pitch detected %f confidence %f", pitch_found, confidence);
+      }
+      emit pitch_data(pitch_found, confidence);
 
       //if (_grain->norm[0] > 0.1) {
       //  cvec_print(_grain);

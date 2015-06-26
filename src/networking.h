@@ -33,6 +33,7 @@
 
 #define MSG_FFT 0x66
 #define MSG_ONSET 0x77
+#define MSG_PITCH 0x88
 
 
 class Networking : public QObject
@@ -49,6 +50,7 @@ public:
 public slots:
     void transmit_onset(void);
     void transmit_fft_data(int len, float *data);
+    void transmit_pitch_data(float pitch, float confidence);
 
 private:
     QUdpSocket *_socket;

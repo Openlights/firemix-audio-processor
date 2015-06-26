@@ -32,7 +32,12 @@
 #include <jack/midiport.h>
 #include <jack/ringbuffer.h>
 
+// TODO: Make this less dumb by requiring Win32 to have aubio.h in the same place?
+#ifdef __MINGW32__
 #include <aubio.h>
+#else
+#include <aubio/aubio.h>
+#endif
 
 #define FFT_SIZE 1024
 #define BUF_SIZE 1024
@@ -59,6 +64,7 @@ public:
 signals:
     void onset_detected(void);
     void fft_data(int len, float *data);
+    void pitch_data(float pitch, float confidence);
 
 private:
   jack_port_t *_input_port;
