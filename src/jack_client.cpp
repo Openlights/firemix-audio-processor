@@ -38,6 +38,12 @@ JackClient::JackClient()
 
   _ibuf = NULL;
   _ibuf = new_fvec(HOP_SIZE);
+
+  if (!_ibuf)
+  {
+    qDebug() << "Error allocating buffer";
+  }
+
   _onset_list = new_fvec(1);
   
   _client = jack_client_open(client_name, options, &status, server_name);
@@ -63,6 +69,24 @@ JackClient::JackClient()
   {
       qDebug() << "Unique name" << client_name << "assigned.";
   }
+
+  _samplerate = jack_get_sample_rate(_client);
+
+  char _onset_mode[4] = "mkl";
+  //char _onset_mode[4] = "hfc";
+  //char _onset_mode[9] = "specflux";
+  smpl_t threshold = 0.3;
+  smpl_t silence = -70.0;
+  _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  aubio_onset_set_threshold(_onset, threshold);
+  aubio_onset_set_silence(_onset, silence);
+  aubio_onset_set_minioi_ms(_onset, 250);
+
+  char _pitch_mode[7] = "yinfft";
+  _pitch = new_aubio_pitch(_pitch_mode, BUF_SIZE, HOP_SIZE, _samplerate);
+  _pitch_value = new_fvec(1);
+  char _pitch_unit[3] = "Hz";
+  aubio_pitch_set_unit(_pitch, _pitch_unit);
 
   jack_set_process_callback(_client, _process, this);
   jack_on_shutdown(_client, _jack_client_shutdown, this);
@@ -95,33 +119,10 @@ JackClient::JackClient()
       return;
   }
 
-  _samplerate = jack_get_sample_rate(_client);
-
   qDebug("Registered JACK input port.  Listening at %d kHz", _samplerate);
-
-  char _onset_mode[4] = "mkl";
-  //char _onset_mode[4] = "hfc";
-  //char _onset_mode[9] = "specflux";
-  smpl_t threshold = 0.3;
-  smpl_t silence = -70.0;
-  _onset = new_aubio_onset(_onset_mode, BUF_SIZE, HOP_SIZE, _samplerate);
-  aubio_onset_set_threshold(_onset, threshold);
-  aubio_onset_set_silence(_onset, silence);
-  aubio_onset_set_minioi_ms(_onset, 250);
-  
-  char _pitch_mode[7] = "yinfft";
-  _pitch = new_aubio_pitch(_pitch_mode, BUF_SIZE, HOP_SIZE, _samplerate);
-  _pitch_value = new_fvec(1);
-  char _pitch_unit[3] = "Hz";
-  aubio_pitch_set_unit(_pitch, _pitch_unit);
 
   free (ports);
   _active = true;
-
-  if (!_ibuf)
-  {
-    qDebug() << "Error allocating buffer";
-  }
 }
 
 
