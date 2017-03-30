@@ -23,10 +23,10 @@
 #include "networking.h"
 
 
-Networking::Networking(uint16_t port_num)
+Networking::Networking(const QHostAddress& dest_addr, uint16_t port_num)
+    : _dest_addr(dest_addr), _port_num(port_num)
 {
     _socket = new QUdpSocket(this);
-    _port_num = port_num;
 }
 
 
@@ -53,7 +53,7 @@ void Networking::transmit_onset()
     dgram.resize(1);
     dgram[0] = MSG_ONSET;
     //qDebug() << "beat";
-    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+    _socket->writeDatagram(dgram, _dest_addr, _port_num);
 }
 
 void Networking::transmit_fft_data(int len, float *data)
@@ -64,7 +64,7 @@ void Networking::transmit_fft_data(int len, float *data)
     dgram[1] = (char)len;
     dgram[2] = (char)((len & 0xff00) >> 8);
     memcpy(dgram.data() + 3, data, len * sizeof(float));
-    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+    _socket->writeDatagram(dgram, _dest_addr, _port_num);
 }
 
 
@@ -78,5 +78,5 @@ void Networking::transmit_pitch_data(float pitch, float confidence)
     *ptr++ = pitch;
     *ptr = confidence;
 
-    _socket->writeDatagram(dgram, QHostAddress::LocalHost, _port_num);
+    _socket->writeDatagram(dgram, _dest_addr, _port_num);
 }
