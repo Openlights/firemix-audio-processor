@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include <QtCore/QCoreApplication>
+#include <QHostInfo>
 
 #include "jack_client.h"
 #include "networking.h"
@@ -30,8 +31,25 @@ int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
 
+    QHostAddress dest_addr;
+    if (argc > 1) {
+        QHostInfo host_info = QHostInfo::fromName(argv[1]);
+        if (host_info.error() != QHostInfo::NoError
+            || host_info.addresses().empty())
+        {
+            qFatal("Could not resolve host: %s: %s", argv[1],
+                   host_info.errorString().toUtf8().constData());
+            exit(1);
+        }
+        dest_addr = host_info.addresses().first();
+    } else {
+        dest_addr = QHostAddress::LocalHost;
+    }
+
+    qDebug() << "Sending FFT data to" << dest_addr << "port" << TRANSMIT_PORT;
+
     JackClient jc;
-    Networking net(TRANSMIT_PORT);
+    Networking net(dest_addr, TRANSMIT_PORT);
 
     QObject::connect(&jc, SIGNAL(onset_detected()), &net, SLOT(transmit_onset()));
     QObject::connect(&jc, SIGNAL(fft_data(int, float*)), &net, SLOT(transmit_fft_data(int, float*)));

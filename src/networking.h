@@ -41,7 +41,7 @@ class Networking : public QObject
     Q_OBJECT
 
 public:
-    Networking(uint16_t port_num);
+    Networking(const QHostAddress& dest_addr, uint16_t port_num);
     ~Networking();
 
     bool open(void);
@@ -54,6 +54,7 @@ public slots:
 
 private:
     QUdpSocket *_socket;
+    QHostAddress _dest_addr;
     uint16_t _port_num;
 };
 
