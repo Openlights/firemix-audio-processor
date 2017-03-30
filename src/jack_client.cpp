@@ -23,7 +23,8 @@
 #include "jack_client.h"
 
 
-JackClient::JackClient()
+JackClient::JackClient(unsigned int fft_send_interval)
+    : _fft_send_interval(fft_send_interval)
 {
   const char **ports;
   const char *client_name = "firemix-audio-processor";
@@ -187,7 +188,7 @@ int JackClient::process(jack_nframes_t nframes) {
     {
       aubio_fft_do(_fft, _ibuf, _grain);
 
-      if (delay > FFT_SEND_INTERVAL)
+      if (delay > _fft_send_interval)
       {
         const int logged_size = 256;
         float logged_buffer[logged_size];

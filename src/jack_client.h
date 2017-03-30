@@ -42,7 +42,6 @@
 #define FFT_SIZE 1024
 #define BUF_SIZE 1024
 #define HOP_SIZE 1024
-#define FFT_SEND_INTERVAL 1024
 
 typedef jack_default_audio_sample_t sample_t;
 
@@ -52,7 +51,7 @@ class JackClient : public QObject
   Q_OBJECT
 
 public:
-  JackClient();
+  JackClient(unsigned int _send_interval);
   ~JackClient();
 
   static void _jack_client_shutdown(void* arg);
@@ -67,6 +66,8 @@ signals:
     void pitch_data(float pitch, float confidence);
 
 private:
+  unsigned int _fft_send_interval;
+
   jack_port_t *_input_port;
   jack_port_t *_output_port;
   jack_client_t *_client;
